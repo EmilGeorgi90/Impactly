@@ -11,7 +11,7 @@ namespace backend.Model
 
         public string Password { get; set; }
 
-        public Byte[] Salt { get; set; }
+        public string Salt { get; set; }
 
         public Roles Role { get; set; }
 

@@ -14,9 +14,6 @@ namespace backend.Controllers
     [ApiController]
     public class Auth : ControllerBase
     {
-        private const int keySize = 64;
-        private const int iterations = 350000;
-        private HashAlgorithmName hashAlgorithm = HashAlgorithmName.SHA512;
         private List<UserDTO> userDTOs = new List<UserDTO>();
         private readonly IConfiguration _config;
         private DbService<UserDTO> _dbService;
@@ -24,14 +21,15 @@ namespace backend.Controllers
         {
             _config = config;
             _dbService = new DbService<UserDTO>();
-            userDTOs = (List<UserDTO>)_dbService.GetAll("SELECT * FROM \"UserDTO\"").GetAwaiter().GetResult();
+            userDTOs = _dbService.GetAll("SELECT * FROM \"UserDTO\"").GetAwaiter().GetResult().Cast<UserDTO>().ToList();
+
         }
 
         [AllowAnonymous]
         [HttpPost]
         public ActionResult Login([FromBody] UserLogin userLogin)
         {
-            var user = Authenticate(userLogin).GetAwaiter().GetResult();
+            var user = Authenticate(userLogin);
             if (user != null)
             {
                 var token = GenerateToken(user);
@@ -62,25 +60,9 @@ namespace backend.Controllers
         }
 
         //To authenticate user
-        private async Task<UserDTO> Authenticate(UserLogin userLogin)
+        private UserDTO Authenticate(UserLogin userLogin)
         {
-            return userDTOs.Find(user => user.Username == userLogin.Username && VerifyPassword(userLogin.Password, user.Password, user.Salt));
-        }
-        public string HashPasword(string password, out byte[] salt)
-        {
-            salt = RandomNumberGenerator.GetBytes(keySize);
-            var hash = Rfc2898DeriveBytes.Pbkdf2(
-                Encoding.UTF8.GetBytes(password),
-                salt,
-                iterations,
-                hashAlgorithm,
-                keySize);
-            return Convert.ToHexString(hash);
-        }
-        bool VerifyPassword(string password, string hash, byte[] salt)
-        {
-            var hashToCompare = Rfc2898DeriveBytes.Pbkdf2(password, salt, iterations, hashAlgorithm, keySize);
-            return hashToCompare.SequenceEqual(Convert.FromHexString(hash));
+            return userDTOs.Find(user => user.Username == userLogin.Username && _dbService.VerifyPassword(userLogin.Password, user.Password, Convert.FromHexString(user.Salt)));
         }
     }
 }

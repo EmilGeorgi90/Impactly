@@ -1,9 +1,12 @@
 ﻿using backend.Model;
+using backend.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Data;
 using System.Security.Claims;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace backend.Controllers
 {
@@ -11,27 +14,70 @@ namespace backend.Controllers
     [ApiController]
     public class UserController : ControllerBase
     {
-        [HttpGet]
-        [Route("Admins")]
-        [Authorize(Roles = "Admin")]
-        public IActionResult AdminEndPoint()
+        private DbService<UserDTO> _dbService;
+        private readonly IConfiguration _config;
+        private const int keySize = 64;
+        public UserController(IConfiguration config)
         {
-            var currentUser = GetCurrentUser();
-            return Ok($"Hi you are an {currentUser.Role}");
+            _config = config;
+            _dbService = new DbService<UserDTO>();
         }
-        private UserDTO GetCurrentUser()
+        [Authorize("Admin")]
+        [Route("GetOne")]
+        [HttpPost]
+        public ActionResult GetUser([FromBody] UserLogin user)
         {
-            var identity = HttpContext.User.Identity as ClaimsIdentity;
-            if (identity != null)
+            UserDTO userDTO = (UserDTO)_dbService.GetOne($"SELECT * FROM \"UserDTO\" WHERE id={user.ID}").GetAwaiter().GetResult();
+            if (userDTO == null)
             {
-                var userClaims = identity.Claims;
-                return new UserDTO
-                {
-                    Username = userClaims.FirstOrDefault(x => x.Type == ClaimTypes.NameIdentifier)?.Value,
-                    Role = (Roles)int.Parse(userClaims.FirstOrDefault(x => x.Type == ClaimTypes.Role)?.Value)
-                };
+                return BadRequest();
             }
-            return null;
+            return Ok(userDTO);
+        }
+        [Authorize("Admin")]
+        [Route("Add")]
+        [HttpPost]
+        public ActionResult AddUser([FromBody] UserLogin user)
+        {
+            byte[] passHash = new byte[keySize];
+            string password = _dbService.HashPasword(user.Password, out passHash);
+            string passSalt = Convert.ToHexString(passHash);
+            if (_dbService.Insert($"INSERT INTO \"UserDTO\" (\"Username\", \"Password\", \"PasswordSalt\", \"Role\") values ('{user.Username}', '{password}', '{passSalt}', '0')").GetAwaiter().GetResult())
+            {
+                return Ok();
+            }
+            return BadRequest();
+        }
+        [Authorize("Admin")]
+        [Route("Delete")]
+        [HttpPost]
+        public ActionResult DeleteUser(int id)
+        {
+            if (_dbService.Delete($"DELETE FROM \"UserDTO\" WHERE id={id}").GetAwaiter().GetResult())
+            {
+                return Ok();
+            }
+            return BadRequest();
+        }
+        [Authorize("Admin")]
+        [Route("Update")]
+        [HttpPost]
+        public ActionResult UpdateUser([FromBody] UserLogin user)
+        {
+            UserDTO userDTO = (UserDTO)_dbService.GetOne($"SELECT * FROM \"UserDTO\" WHERE id={user.ID}").GetAwaiter().GetResult();
+            if(userDTO == null)
+            {
+                return BadRequest();
+            }
+
+            byte[] passHash = new byte[keySize];
+            string password = _dbService.HashPasword(user.Password, out passHash);
+            string passSalt = Convert.ToHexString(passHash);
+            if (_dbService.Update($"UPDATE \"UserDTO\" SET \"Username\"={user.Username} \"Password\", \"PasswordSalt\", \"Role\") values ('{user.Username}', '{password}', '{passSalt}', '0')").GetAwaiter().GetResult())
+            {
+                return Ok();
+            }
+            return BadRequest();
         }
     }
 }
