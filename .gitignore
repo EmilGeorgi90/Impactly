@@ -46,6 +46,7 @@
 ###############
 # Directories #
 ###############
+*/appsettings.json
 /backend/backend/bin/
 /backend/backend/obj/
 /backend/backend/TestResults/
@@ -97,3 +98,4 @@ _[Ss]cripts
 *.nupkg
 *.ncrunchsolution
 *.dot[Cc]over
+backend/backend/appsettings.json
