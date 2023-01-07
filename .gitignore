@@ -1,0 +1,99 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+/frontend/node_modules
+/frontend/.pnp
+.pnp.js
+
+# testing
+/frontend/coverage
+
+# production
+/frontend/build
+
+# misc
+/frontend/.DS_Store
+/frontend/.env.local
+/frontend/.env.development.local
+/frontend/.env.test.local
+/frontend/.env.production.local
+
+/frontend/npm-debug.log*
+/frontend/yarn-debug.log*
+/frontend/yarn-error.log*
+
+###################
+# compiled source #
+###################
+/backend/backend/*.com
+/backend/backend/*.class
+/backend/backend/*.dll
+/backend/backend/*.exe
+/backend/backend/*.pdb
+/backend/backend/*.dll.config
+/backend/backend/*.cache
+/backend/backend/*.suo
+# Include dlls if they’re in the NuGet packages directory
+/backend/backend/!/packages/*/lib/*.dll
+/backend/backend/!/packages/*/lib/*/*.dll
+# Include dlls if they're in the CommonReferences directory
+/backend/backend/!*CommonReferences/*.dll
+####################
+# VS Upgrade stuff #
+####################
+/backend/backend/UpgradeLog.XML
+/backend/backend/_UpgradeReport_Files/
+###############
+# Directories #
+###############
+/backend/backend/bin/
+/backend/backend/obj/
+/backend/backend/TestResults/
+###################
+# Web publish log #
+###################
+*.Publish.xml
+#############
+# Resharper #
+#############
+/_ReSharper.*
+*.ReSharper.*
+############
+# Packages #
+############
+# it’s better to unpack these files and commit the raw source
+# git has its own built in compression methods
+*.7z
+*.dmg
+*.gz
+*.iso
+*.jar
+*.rar
+*.tar
+*.zip
+######################
+# Logs and databases #
+######################
+*.log
+*.sqlite
+# OS generated files #
+######################
+.DS_Store?
+ehthumbs.db
+Icon?
+Thumbs.db
+[Bb]in
+[Oo]bj
+[Tt]est[Rr]esults
+*.suo
+*.user
+*.[Cc]ache
+*[Rr]esharper*
+packages
+NuGet.exe
+_[Ss]cripts
+*.exe
+*.dll
+*.nupkg
+*.ncrunchsolution
+*.dot[Cc]over
