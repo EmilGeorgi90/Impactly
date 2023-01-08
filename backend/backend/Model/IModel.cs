@@ -2,6 +2,6 @@
 {
     internal interface IModel
     {
-        public int ID { get; set; }
+        public int id { get; set; }
     }
 }

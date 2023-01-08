@@ -3,6 +3,7 @@ using backend.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.IdentityModel.Tokens;
 using System.Data;
 using System.Security.Claims;
 using System.Security.Cryptography;
@@ -22,58 +23,67 @@ namespace backend.Controllers
             _config = config;
             _dbService = new DbService<UserDTO>();
         }
-        [Authorize("Admin")]
+        [Authorize]
         [Route("GetOne")]
         [HttpPost]
-        public ActionResult GetUser([FromBody] UserLogin user)
+        public ActionResult GetUser(int id)
         {
-            UserDTO userDTO = (UserDTO)_dbService.GetOne($"SELECT * FROM \"UserDTO\" WHERE id={user.ID}").GetAwaiter().GetResult();
+            UserDTO userDTO = (UserDTO)_dbService.GetOne($"SELECT * FROM \"UserDTO\" WHERE id={id}").GetAwaiter().GetResult();
             if (userDTO == null)
             {
                 return BadRequest();
             }
             return Ok(userDTO);
         }
-        [Authorize("Admin")]
         [Route("Add")]
         [HttpPost]
         public ActionResult AddUser([FromBody] UserLogin user)
         {
             byte[] passHash = new byte[keySize];
-            string password = _dbService.HashPasword(user.Password, out passHash);
+            string password = _dbService.HashPasword(user.Password ?? "", out passHash);
             string passSalt = Convert.ToHexString(passHash);
-            if (_dbService.Insert($"INSERT INTO \"UserDTO\" (\"Username\", \"Password\", \"PasswordSalt\", \"Role\") values ('{user.Username}', '{password}', '{passSalt}', '0')").GetAwaiter().GetResult())
+            if (_dbService.ExecuteNonQuery($"INSERT INTO \"UserDTO\" (\"Username\", \"Password\", \"PasswordSalt\", \"Role\") values ('{user.Username}', '{password}', '{passSalt}', '0')").GetAwaiter().GetResult())
             {
                 return Ok();
             }
             return BadRequest();
         }
-        [Authorize("Admin")]
         [Route("Delete")]
         [HttpPost]
         public ActionResult DeleteUser(int id)
         {
-            if (_dbService.Delete($"DELETE FROM \"UserDTO\" WHERE id={id}").GetAwaiter().GetResult())
+            if (_dbService.ExecuteNonQuery($"DELETE FROM \"UserDTO\" WHERE id={id}").GetAwaiter().GetResult())
             {
                 return Ok();
             }
             return BadRequest();
         }
-        [Authorize("Admin")]
         [Route("Update")]
         [HttpPost]
-        public ActionResult UpdateUser([FromBody] UserLogin user)
+        public ActionResult Update(int id, [FromBody] UserDTO user)
         {
-            UserDTO userDTO = (UserDTO)_dbService.GetOne($"SELECT * FROM \"UserDTO\" WHERE id={user.ID}").GetAwaiter().GetResult();
+            UserDTO userDTO = _dbService.GetOne($"SELECT * FROM \"UserDTO\" WHERE id={id}").GetAwaiter().GetResult();
             if(userDTO == null)
             {
                 return BadRequest();
             }
-
-            byte[] passHash = new byte[keySize];
-            string password = _dbService.HashPasword(user.Password, out passHash);
-            string passSalt = Convert.ToHexString(passHash);
-            if (_dbService.Update($"UPDATE \"UserDTO\" SET \"Username\"={user.Username} \"Password\", \"PasswordSalt\", \"Role\") values ('{user.Username}', '{password}', '{passSalt}', '0')").GetAwaiter().GetResult())
+            if (!user.Username.IsNullOrEmpty())
+            {
+                userDTO.Username = user.Username;
+            }
+            if (!user.Password.IsNullOrEmpty())
+            {
+                byte[] passHash = new byte[keySize];
+                string password = _dbService.HashPasword(user.Password ?? "", out passHash);
+                string passSalt = Convert.ToHexString(passHash);
+                userDTO.Password = password;
+                userDTO.PasswordSalt = passSalt;
+            }
+            if (!user.Role.ToString().IsNullOrEmpty())
+            {
+                userDTO.Role = user.Role;
+            }
+            if (_dbService.ExecuteNonQuery($"UPDATE \"UserDTO\" SET \"Username\"='{userDTO.Username}', \"Password\"='{userDTO.Password}', \"PasswordSalt\"='{userDTO.PasswordSalt}', \"Role\"='{(int)userDTO.Role}' WHERE id={id}").GetAwaiter().GetResult())
             {
                 return Ok();
             }

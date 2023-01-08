@@ -42,11 +42,11 @@ namespace backend.Controllers
         // To generate token
         private string GenerateToken(UserDTO user)
         {
-            var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]));
+            var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"] ?? ""));
             var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
             var claims = new[]
             {
-                new Claim(ClaimTypes.NameIdentifier,user.Username),
+                new Claim(ClaimTypes.NameIdentifier,user.Username ?? ""),
                 new Claim(ClaimTypes.Role,user.Role.ToString())
             };
             var token = new JwtSecurityToken(_config["Jwt:Issuer"],
@@ -62,7 +62,7 @@ namespace backend.Controllers
         //To authenticate user
         private UserDTO Authenticate(UserLogin userLogin)
         {
-            return userDTOs.Find(user => user.Username == userLogin.Username && _dbService.VerifyPassword(userLogin.Password, user.Password, Convert.FromHexString(user.Salt)));
+            return userDTOs.Find(user => user.Username == userLogin.Username && _dbService.VerifyPassword(userLogin.Password ?? "", user.Password ?? "", Convert.FromHexString(user.PasswordSalt ?? ""))) ?? throw new ArgumentException();
         }
     }
 }

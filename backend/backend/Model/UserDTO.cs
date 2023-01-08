@@ -5,13 +5,13 @@ namespace backend.Model
 {
     public class UserDTO : IModel
     {
-        public int ID { get; set; }
+        public int id { get; set; }
 
-        public string Username { get; set; }
+        public string? Username { get; set; }
 
-        public string Password { get; set; }
+        public string? Password { get; set; }
 
-        public string Salt { get; set; }
+        public string? PasswordSalt { get; set; }
 
         public Roles Role { get; set; }
 

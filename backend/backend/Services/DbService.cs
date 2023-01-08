@@ -1,6 +1,10 @@
 ﻿using backend.Model;
 using Npgsql;
+using System.Collections.Generic;
+using System.ComponentModel;
 using System.Data;
+using System.Data.Common;
+using System.Reflection;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -17,64 +21,136 @@ namespace backend.Services
         {
             dataSource = NpgsqlDataSource.Create(cs);
         }
-        public async Task<IModel> GetOne(string sql)
+        private async Task<IModel> GetUser(string sql)
         {
+            List<KeyValuePair<string, object>> keyValues = new List<KeyValuePair<string, object>>();
+            IModel returnResult = Activator.CreateInstance(typeof(UserDTO), new object[] { }) as IModel ?? throw new ArgumentException();
             var cmd = dataSource.CreateCommand(sql);
             var reader = await cmd.ExecuteReaderAsync();
-            UserDTO temp = new UserDTO();
-            temp.ID = reader.GetInt16(0);
-            temp.Username = reader.GetString(2);
-            temp.Password = reader.GetString(3);
-            temp.Salt = reader.GetString(4);
-            temp.Role = (Roles)reader.GetInt32(5);
-            return temp;
-        }
-        public async Task<ICollection<IModel>> GetAll(string sql)
-        {
-            List<IModel> list = new List<IModel>();
-            var cmd = dataSource.CreateCommand(sql);
-            var reader = await cmd.ExecuteReaderAsync();
-            while (await reader.ReadAsync())
+            int fieldCount = reader.FieldCount;
+            while (reader.Read())
             {
-                UserDTO temp = new UserDTO();
-                temp.ID = reader.GetInt16(0);
-                temp.Username = reader.GetString(2);
-                temp.Password = reader.GetString(3);
-                temp.Salt = reader.GetString(4);
-                temp.Role = (Roles)reader.GetInt32(5);
-                list.Add(temp);
+                object[] fieldValues = new object[fieldCount];
+                int instances = reader.GetValues(fieldValues);
+                for (int fieldCounter = 0; fieldCounter < fieldCount; fieldCounter++)
+                {
+                    KeyValuePair<string, object> keyValue = new KeyValuePair<string, object>(reader.GetName(fieldCounter), fieldValues[fieldCounter]);
+                    Console.WriteLine();
+                    if (Convert.IsDBNull(fieldValues[fieldCounter]))
+                        fieldValues[fieldCounter] = "NA";
+
+                    keyValues.Add(keyValue);
+                }
+            }
+            foreach (var item in keyValues)
+            {
+                PropertyInfo prop = returnResult?.GetType().GetProperty(item.Key) ?? throw new ArgumentException();
+                var propType = returnResult?.GetType().GetProperty(item.Key)?.PropertyType;
+                Console.WriteLine(item.Value.ToString());
+                var converter = TypeDescriptor.GetConverter(propType ?? throw new ArgumentException());
+                var convertedObject = converter.ConvertFromString(item.Value.ToString());
+                prop.SetValue(returnResult, convertedObject, null);
+
+            }
+            return returnResult ?? throw new ArgumentException();
+        }
+        public async Task<T> GetOne(string sql)
+        {
+            List<KeyValuePair<string, object>> keyValues = new List<KeyValuePair<string, object>>();
+            T returnResult = (T)Activator.CreateInstance(typeof(T), new object[] { });
+            var cmd = dataSource.CreateCommand(sql);
+            var reader = await cmd.ExecuteReaderAsync();
+            int fieldCount = reader.FieldCount;
+            while (reader.Read())
+            {
+                object[] fieldValues = new object[fieldCount];
+                int instances = reader.GetValues(fieldValues);
+                for (int fieldCounter = 0; fieldCounter < fieldCount; fieldCounter++)
+                {
+                    KeyValuePair<string, object> keyValue = new KeyValuePair<string, object>(reader.GetName(fieldCounter), fieldValues[fieldCounter]);
+                    Console.WriteLine();
+                    if (Convert.IsDBNull(fieldValues[fieldCounter]))
+                        fieldValues[fieldCounter] = "NA";
+
+                    keyValues.Add(keyValue);
+                }
+            }
+            foreach (var item in keyValues)
+            {
+                PropertyInfo prop = returnResult?.GetType().GetProperty(item.Key) ?? throw new ArgumentException();
+                if (item.Key == "UserId")
+                {
+                    UserDTO temp = (UserDTO)await GetUser($"SELECT * FROM \"UserDTO\" WHERE id={item.Value}");
+                    prop.SetValue(returnResult, temp);
+                }
+                else
+                {
+                    var propType = returnResult.GetType().GetProperty(item.Key)?.PropertyType;
+                    Console.WriteLine(item.Value.ToString());
+                    var converter = TypeDescriptor.GetConverter(propType ?? throw new ArgumentException());
+                    var convertedObject = converter.ConvertFromString(item.Value.ToString() ?? "");
+                    prop.SetValue(returnResult, convertedObject, null);
+                }
+            }
+            return returnResult ?? throw new ArgumentException();
+        }
+        public async Task<ICollection<T>> GetAll(string sql)
+        {
+            List<T> list = new List<T>();
+            var cmd = dataSource.CreateCommand(sql);
+            var reader = await cmd.ExecuteReaderAsync();
+            int fieldCount = reader.FieldCount;
+            while (reader.Read())
+            {
+                T returnResult = (T)Activator.CreateInstance(typeof(T), new object[] { });
+                List<KeyValuePair<string, object>> keyValues = new List<KeyValuePair<string, object>>();
+                object[] fieldValues = new object[fieldCount];
+                int instances = reader.GetValues(fieldValues);
+                for (int fieldCounter = 0; fieldCounter < fieldCount; fieldCounter++)
+                {
+                    KeyValuePair<string, object> keyValue = new KeyValuePair<string, object>(reader.GetName(fieldCounter), fieldValues[fieldCounter]);
+                    Console.WriteLine();
+                    if (Convert.IsDBNull(fieldValues[fieldCounter]))
+                        fieldValues[fieldCounter] = "NA";
+
+                    keyValues.Add(keyValue);
+                }
+                foreach (var item in keyValues)
+                {
+                    PropertyInfo prop = returnResult?.GetType().GetProperty(item.Key) ?? throw new ArgumentException();
+                    if (item.Key == "UserId")
+                    {
+                        UserDTO temp = (UserDTO)await GetUser($"SELECT * FROM \"UserDTO\" WHERE id={item.Value}");
+                        prop.SetValue(returnResult, temp);
+                    }
+                    else
+                    {
+                        var propType = returnResult.GetType().GetProperty(item.Key)?.PropertyType;
+                        var converter = TypeDescriptor.GetConverter(propType ?? throw new ArgumentException());
+                        var convertedObject = converter.ConvertFromString(item.Value.ToString() ?? "");
+                        prop.SetValue(returnResult, convertedObject, null);
+                    }
+                }
+                list.Add(returnResult ?? throw new ArgumentException());
             }
             return list;
         }
-        public async Task<bool> Insert(string sql)
+        public async Task<bool> ExecuteNonQuery(string sql)
         {
-            var cmd = dataSource.CreateCommand(sql);
-            var RecordsAffected = await cmd.ExecuteNonQueryAsync();
-            if (RecordsAffected > 0)
+            try
             {
-                return true;
+                var cmd = dataSource.CreateCommand(sql);
+                var RecordsAffected = await cmd.ExecuteNonQueryAsync();
+                if (RecordsAffected > 0)
+                {
+                    return true;
+                }
+                return false;
             }
-            return false;
-        }
-        public async Task<bool> Delete(string sql)
-        {
-            var cmd = dataSource.CreateCommand(sql);
-            var RecordsAffected = await cmd.ExecuteNonQueryAsync();
-            if (RecordsAffected > 0)
+            catch (DbException)
             {
-                return true;
+                return false;
             }
-            return false;
-        }
-        public async Task<bool> Update(string sql)
-        {
-            var cmd = dataSource.CreateCommand(sql);
-            var RecordsAffected = await cmd.ExecuteNonQueryAsync();
-            if (RecordsAffected > 0)
-            {
-                return true;
-            }
-            return false;
         }
         public string HashPasword(string password, out byte[] salt)
         {
