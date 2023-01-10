@@ -1,8 +1,6 @@
 ﻿using backend.Model;
 using Npgsql;
-using System.Collections.Generic;
 using System.ComponentModel;
-using System.Data;
 using System.Data.Common;
 using System.Reflection;
 using System.Security.Cryptography;
@@ -25,8 +23,8 @@ namespace backend.Services
         {
             List<KeyValuePair<string, object>> keyValues = new List<KeyValuePair<string, object>>();
             IModel returnResult = Activator.CreateInstance(typeof(UserDTO), new object[] { }) as IModel ?? throw new ArgumentException();
-            var cmd = dataSource.CreateCommand(sql);
-            var reader = await cmd.ExecuteReaderAsync();
+            await using var cmd = dataSource.CreateCommand(sql);
+            await using var reader = await cmd.ExecuteReaderAsync();
             int fieldCount = reader.FieldCount;
             while (reader.Read())
             {
@@ -117,7 +115,8 @@ namespace backend.Services
                 }
                 foreach (var item in keyValues)
                 {
-                    PropertyInfo prop = returnResult?.GetType().GetProperty(item.Key) ?? throw new ArgumentException();
+                    PropertyInfo prop = returnResult?.GetType().GetProperty(item.Key);
+                    if (prop == null) continue;
                     if (item.Key == "UserId")
                     {
                         UserDTO temp = (UserDTO)await GetUser($"SELECT * FROM \"UserDTO\" WHERE id={item.Value}");

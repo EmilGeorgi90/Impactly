@@ -1,18 +1,8 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
-using backend.Data;
 using Microsoft.OpenApi.Models;
-using Supabase.Storage;
-using static Supabase.Client;
-using System.Diagnostics;
-using System.Reflection;
-using Supabase.Realtime;
-using backend.Model;
-using System.ComponentModel;
-using System.Collections.Specialized;
+
 
 internal class Program
 {
@@ -20,8 +10,16 @@ internal class Program
     {
 
         var builder = WebApplication.CreateBuilder(args);
-        builder.Services.AddDbContext<backendContext>(options =>
-            options.UseSqlServer(builder.Configuration.GetConnectionString("backendContext") ?? throw new InvalidOperationException("Connection string 'backendContext' not found.")));
+        builder.Services.AddCors(options =>
+        {
+            options.AddPolicy("AllowAllHeaders",
+                builder =>
+                {
+                    builder.AllowAnyOrigin()
+                           .AllowAnyHeader()
+                           .AllowAnyMethod();
+                });
+        });
 
         // Add services to the container.
 
@@ -72,7 +70,7 @@ internal class Program
         });
 
         var app = builder.Build();
-
+        app.UseCors("AllowAllHeaders");
 
 
         // Configure the HTTP request pipeline.

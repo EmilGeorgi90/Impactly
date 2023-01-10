@@ -1,16 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.EntityFrameworkCore;
-using backend.Data;
-using backend.Model;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using backend.Services;
-using Supabase.Gotrue;
-using System.Security.Cryptography;
 using Microsoft.IdentityModel.Tokens;
 
 namespace backend.Controllers
@@ -19,13 +9,11 @@ namespace backend.Controllers
     [ApiController]
     public class TasksController : ControllerBase
     {
-        private readonly backendContext _context;
         private DbService<Model.Task> _dbService;
 
-        public TasksController(backendContext context)
+        public TasksController()
         {
             _dbService = new DbService<Model.Task>();
-            _context = context;
         }
 
         [HttpPost]
@@ -47,9 +35,9 @@ namespace backend.Controllers
         [HttpPost]
         [Authorize]
         [Route("Add")]
-        public ActionResult Add([FromBody] Model.Task task)
+        public ActionResult Add(int id, [FromBody] Model.Task task)
         {
-             if(_dbService.ExecuteNonQuery($"INSERT INTO \"TODO\" (\"UserId\", \"Title\", \"Description\") VALUES ({task.UserId?.id}, '{task.Title}', '{task.Description}')").GetAwaiter().GetResult())
+             if(_dbService.ExecuteNonQuery($"INSERT INTO \"TODO\" (\"UserId\", \"Title\") VALUES ({id}, '{task.Title}')").GetAwaiter().GetResult())
             {
                 return Ok();
             }
@@ -67,15 +55,11 @@ namespace backend.Controllers
             {
                 return BadRequest();
             }
-            if (!value.Description.IsNullOrEmpty())
-            {
-                task.Description = value.Description;
-            }
             if (!value.Title.IsNullOrEmpty())
             {
                 task.Title = value.Title;
             }
-            if (_dbService.ExecuteNonQuery($"UPDATE \"TODO\" SET \"Title\"='{task.Title}', \"Description\"='{task.Description}' WHERE id={id}").GetAwaiter().GetResult())
+            if (_dbService.ExecuteNonQuery($"UPDATE \"TODO\" SET \"Title\"='{task.Title}' WHERE id={id}").GetAwaiter().GetResult())
             {
                 return Ok();
             }
@@ -93,11 +77,6 @@ namespace backend.Controllers
                 return Ok();
             }
             return BadRequest();
-        }
-
-        private bool TaskExists(int id)
-        {
-          return (_context.Task?.Any(e => e.id == id)).GetValueOrDefault();
         }
     }
 }
