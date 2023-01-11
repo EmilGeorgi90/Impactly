@@ -1,7 +1,4 @@
-﻿using Postgrest.Attributes;
-using Supabase;
-
-namespace backend.Model
+﻿namespace backend.Model
 {
     public class UserDTO : IModel
     {

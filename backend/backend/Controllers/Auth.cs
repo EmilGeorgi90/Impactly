@@ -25,7 +25,7 @@ namespace backend.Controllers
         {
             _config = config;
             _dbService = new DbService<UserDTO>();
-            userDTOs = _dbService.GetAll("SELECT * FROM \"UserDTO\"").GetAwaiter().GetResult().Cast<UserDTO>().ToList();
+            userDTOs = _dbService.GetTodos("SELECT * FROM \"UserDTO\"").GetAwaiter().GetResult().Cast<UserDTO>().ToList();
 
         }
 

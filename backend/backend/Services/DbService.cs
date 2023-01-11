@@ -52,7 +52,7 @@ namespace backend.Services
             }
             return returnResult ?? throw new ArgumentException();
         }
-        public async Task<T> GetOne(string sql)
+        public async Task<T> GetTodo(string sql)
         {
             List<KeyValuePair<string, object>> keyValues = new List<KeyValuePair<string, object>>();
             T returnResult = (T)Activator.CreateInstance(typeof(T), new object[] { });
@@ -92,7 +92,7 @@ namespace backend.Services
             }
             return returnResult ?? throw new ArgumentException();
         }
-        public async Task<ICollection<T>> GetAll(string sql)
+        public async Task<ICollection<T>> GetTodos(string sql)
         {
             List<T> list = new List<T>();
             var cmd = dataSource.CreateCommand(sql);

@@ -1,5 +1,5 @@
 import { Component } from "react";
-import { Routes, Route, Link, Navigate } from "react-router-dom";
+import { Routes, Route, Link } from "react-router-dom";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "./App.css";
 
@@ -100,7 +100,6 @@ class App extends Component<Props, State> {
             />
           </Routes>
         </div>
-        {/*<AuthVerify logOut={this.logOut}/> */}
       </div>
     );
   }

@@ -1,6 +1,5 @@
 import { ChangeEvent, Component } from "react";
-import { number } from "yup/lib/locale";
-import { ITask } from "../interfaces";
+import { ITask } from "../types/interfaces";
 
 import UserService from "../services/user.service";
 import TodoTask from "./TodoTask";
@@ -9,7 +8,7 @@ type Props = {};
 
 type State = {
   content: any[];
-  task: string;
+  task: ITask | null;
 };
 
 export default class Home extends Component<Props, State> {
@@ -18,7 +17,7 @@ export default class Home extends Component<Props, State> {
 
     this.state = {
       content: [],
-      task: "",
+      task: null,
     };
   }
   GetTodos = () => {
@@ -28,7 +27,7 @@ export default class Home extends Component<Props, State> {
           content: response.data.map((data: any, index: number) => {
             return { taskName: data.title, id: data.id };
           }),
-          task: ""
+          task: null
         });
       },
       (error) => {
@@ -56,17 +55,21 @@ export default class Home extends Component<Props, State> {
 
   addTask = (): void => {
     const newTask = this.state.task;
+    if(newTask == null) {
+      return;
+    }
     UserService.addTodo(newTask).then((response) => {
       this.GetTodos();
     });
+    this.setState({task: { taskName: "", id:0}})
   };
-  editTask = (id: number, task: string): void => {
+  editTask = (id: number, task: ITask): void => {
     UserService.editTodo(id, task).then((response) => {
       this.GetTodos();
     });
   };
   handleChange = (event: ChangeEvent<HTMLInputElement>): void => {
-    this.setState({ task: event.target.value });
+    this.setState({ task: { taskName: event.target.value, id: 0 } });
   };
   componentDidMount() {
     this.GetTodos();
@@ -78,8 +81,9 @@ export default class Home extends Component<Props, State> {
         <header className="jumbotron">
           <div className="input-group mb-3">
             <input
+              id={this.state.task?.id.toString()}
               name="task"
-              value={this.state.task}
+              value={this.state.task != null ?  this.state.task?.taskName : ""}
               onChange={this.handleChange}
               type="text"
               className="form-control"

@@ -23,7 +23,7 @@ namespace backend.Controllers
         [HttpPost]
         public ActionResult GetUser(int id)
         {
-            UserDTO userDTO = (UserDTO)_dbService.GetOne($"SELECT * FROM \"UserDTO\" WHERE id={id}").GetAwaiter().GetResult();
+            UserDTO userDTO = (UserDTO)_dbService.GetTodo($"SELECT * FROM \"UserDTO\" WHERE id={id}").GetAwaiter().GetResult();
             if (userDTO == null)
             {
                 return BadRequest();
@@ -57,8 +57,8 @@ namespace backend.Controllers
         [HttpPost]
         public ActionResult Update(int id, [FromBody] UserDTO user)
         {
-            UserDTO userDTO = _dbService.GetOne($"SELECT * FROM \"UserDTO\" WHERE id={id}").GetAwaiter().GetResult();
-            if(userDTO == null)
+            UserDTO userDTO = _dbService.GetTodo($"SELECT * FROM \"UserDTO\" WHERE id={id}").GetAwaiter().GetResult();
+            if (userDTO == null)
             {
                 return BadRequest();
             }

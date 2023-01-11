@@ -21,7 +21,7 @@ namespace backend.Controllers
         [Route("GetAll")]
         public ICollection<Model.Task> Get(int id)
         {
-            return _dbService.GetAll($"SELECT * FROM \"TODO\" WHERE \"UserId\"={id}").GetAwaiter().GetResult();
+            return _dbService.GetTodos($"SELECT * FROM \"TODO\" WHERE \"UserId\"={id}").GetAwaiter().GetResult();
         }
 
         [HttpGet]
@@ -29,7 +29,7 @@ namespace backend.Controllers
         [Route("GetOne")]
         public Model.Task GetOne(int id)
         {
-            return _dbService.GetOne($"SELECT * FROM \"TODO\" WHERE id={id}").GetAwaiter().GetResult();
+            return _dbService.GetTodo($"SELECT * FROM \"TODO\" WHERE id={id}").GetAwaiter().GetResult();
         }
 
         [HttpPost]
@@ -50,7 +50,7 @@ namespace backend.Controllers
         [Route("Update")]
         public ActionResult Update(int id, [FromBody] Model.Task value)
         {
-            Model.Task task = _dbService.GetOne($"SELECT * FROM \"TODO\" WHERE id={id}").GetAwaiter().GetResult();
+            Model.Task task = _dbService.GetTodo($"SELECT * FROM \"TODO\" WHERE id={id}").GetAwaiter().GetResult();
             if (task == null)
             {
                 return BadRequest();

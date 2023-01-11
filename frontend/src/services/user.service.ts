@@ -1,5 +1,5 @@
 import axios from 'axios';
-import authHeader from './auth-header';
+import { ITask } from '../types/interfaces';
 
 const API_URL = 'https://localhost:7080/api/';
 const userStr = localStorage.getItem("user");
@@ -16,14 +16,14 @@ class UserService {
     return axios.post(API_URL + 'Tasks/GetAll?id=' + user.id, null, config);
   }
 
-  addTodo(task: string) {
+  addTodo(task: ITask) {
     return axios.post(API_URL + 'Tasks/Add?id=' + user.id, {
-      title: task,
+      title: task.taskName,
     }, config);
   }
-  editTodo(id: number ,task: string) {
+  editTodo(id: number ,task: ITask) {
     return axios.post(API_URL + 'Tasks/Update?id=' + id, {
-      title: task,
+      title: task.taskName,
     }, config);
   }
 
