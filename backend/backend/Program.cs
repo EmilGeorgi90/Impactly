@@ -2,13 +2,15 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Microsoft.OpenApi.Models;
-
+using backend;
 
 internal class Program
 {
     private static void Main(string[] args)
     {
-
+        var root = Directory.GetCurrentDirectory();
+        var dotenv = Path.Combine(root, ".env");
+        DotEnv.Load(dotenv);
         var builder = WebApplication.CreateBuilder(args);
         builder.Services.AddCors(options =>
         {

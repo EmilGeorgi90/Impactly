@@ -7,7 +7,7 @@ import TodoTask from "./TodoTask";
 type Props = {};
 
 type State = {
-  content: any[];
+  content: ITask[];
   task: ITask | null;
 };
 
@@ -47,7 +47,7 @@ export default class Home extends Component<Props, State> {
     this.setState({
       content: [
         ...this.state.content.filter((todo, index) => {
-          return todo.id != taskid;
+          return todo.id !== taskid;
         }),
       ],
     });

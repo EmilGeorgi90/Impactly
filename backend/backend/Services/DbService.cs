@@ -1,4 +1,5 @@
 ﻿using backend.Model;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Npgsql;
 using System.ComponentModel;
 using System.Data.Common;
@@ -12,7 +13,13 @@ namespace backend.Services
     {
         private const int iterations = 350000;
         private HashAlgorithmName hashAlgorithm = HashAlgorithmName.SHA512;
-        string cs = "User Id=postgres;Password=qkDpwwamqQw888Pn;Server=db.tnluydrgjyfcygqufyoz.supabase.co;Port=5432;Database=postgres";
+        private static string host = Environment.GetEnvironmentVariable("SupabaseHost");
+        private static string dbpass = Environment.GetEnvironmentVariable("SupabasePass");
+        private static string port = Environment.GetEnvironmentVariable("supabasePort");
+        private static string user = Environment.GetEnvironmentVariable("supabaseUser");
+        private static string db = Environment.GetEnvironmentVariable("supabaseDb");
+
+        private string cs = $"User Id={user};Password={dbpass};Server={host};Port={port};Database={db}";
         private NpgsqlDataSource dataSource;
         private const int keySize = 64;
         public DbService()
@@ -52,12 +59,16 @@ namespace backend.Services
             }
             return returnResult ?? throw new ArgumentException();
         }
-        public async Task<T> GetTodo(string sql)
+        public async Task<T> ExecuteQuery(string sql)
         {
             List<KeyValuePair<string, object>> keyValues = new List<KeyValuePair<string, object>>();
             T returnResult = (T)Activator.CreateInstance(typeof(T), new object[] { });
             var cmd = dataSource.CreateCommand(sql);
             var reader = await cmd.ExecuteReaderAsync();
+            if(!reader.HasRows)
+            {
+                throw new ArgumentException("No rows found");
+            }
             int fieldCount = reader.FieldCount;
             while (reader.Read())
             {
@@ -92,7 +103,7 @@ namespace backend.Services
             }
             return returnResult ?? throw new ArgumentException();
         }
-        public async Task<ICollection<T>> GetTodos(string sql)
+        public async Task<ICollection<T>> ExecuteQueries(string sql)
         {
             List<T> list = new List<T>();
             var cmd = dataSource.CreateCommand(sql);

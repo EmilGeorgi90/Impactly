@@ -18,7 +18,7 @@ type State = {
   currentUser: any | undefined;
 };
 const defaultProtectedRouteProps: Omit<ProtectedRouteProps, "outlet"> = {
-  isAuthenticated: !!AuthService.getCurrentUser() != null,
+  isAuthenticated: AuthService.getCurrentUser() != null,
   authenticationPath: "/login",
 };
 class App extends Component<Props, State> {
@@ -52,6 +52,7 @@ class App extends Component<Props, State> {
     this.setState({
       currentUser: undefined,
     });
+    defaultProtectedRouteProps.isAuthenticated = false
   }
 
   render() {

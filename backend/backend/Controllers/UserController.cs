@@ -23,12 +23,15 @@ namespace backend.Controllers
         [HttpPost]
         public ActionResult GetUser(int id)
         {
-            UserDTO userDTO = (UserDTO)_dbService.GetTodo($"SELECT * FROM \"UserDTO\" WHERE id={id}").GetAwaiter().GetResult();
-            if (userDTO == null)
+            try
             {
-                return BadRequest();
+                UserDTO userDTO = (UserDTO)_dbService.ExecuteQuery($"SELECT * FROM \"UserDTO\" WHERE id={id}").GetAwaiter().GetResult();
+                return Ok(userDTO);
             }
-            return Ok(userDTO);
+            catch (ArgumentException ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
         [Route("Add")]
         [HttpPost]
@@ -57,7 +60,7 @@ namespace backend.Controllers
         [HttpPost]
         public ActionResult Update(int id, [FromBody] UserDTO user)
         {
-            UserDTO userDTO = _dbService.GetTodo($"SELECT * FROM \"UserDTO\" WHERE id={id}").GetAwaiter().GetResult();
+            UserDTO userDTO = _dbService.ExecuteQuery($"SELECT * FROM \"UserDTO\" WHERE id={id}").GetAwaiter().GetResult();
             if (userDTO == null)
             {
                 return BadRequest();
